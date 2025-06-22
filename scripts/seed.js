@@ -1,42 +1,33 @@
-require('dotenv').config();
+require("dotenv").config();
 const mongoose = require("mongoose");
-const axios = require("axios");
 const Auction = require("../models/Auction");
 
-const MONGO_URI = process.env.MONGO_URI;
-const PRODUCT_API = "http://localhost:8000/api/items"; // Replace with your actual deployed URL if needed
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.error("❌ Connection error:", err));
 
-mongoose.connect(MONGO_URI)
-  .then(async () => {
-    console.log("✅ MongoDB Connected");
+const seedData = [
+  {
+    productName: "Mobile",
+    productDescription: "Latest smartphone with powerful features.",
+    highestBid: { user: "InitialUser", amount: 50000 },
+    biddingHistory: [{ user: "InitialUser", amount: 50000 }],
+    timeRemaining: "3d"
+  },
+  {
+    productName: "Laptop",
+    productDescription: "High-performance laptop for work and gaming.",
+    highestBid: { user: "InitialUser", amount: 70000 },
+    biddingHistory: [{ user: "InitialUser", amount: 70000 }],
+    timeRemaining: "5d"
+  }
+];
 
-    // Clear existing auctions
-    await Auction.deleteMany({});
+const seedAuctions = async () => {
+  await Auction.deleteMany();
+  const auctions = await Auction.insertMany(seedData);
+  console.log("✅ Auctions Seeded:", auctions.length);
+  mongoose.disconnect();
+};
 
-    // Fetch products from external API
-    const { data: products } = await axios.get(PRODUCT_API);
-
-    const auctionDocs = products.map((item, index) => ({
-      productId: item._id || item.id,
-      highestBid: {
-        user: "InitialUser",
-        amount: 50000 + index * 5000
-      },
-      biddingHistory: [
-        {
-          user: "InitialUser",
-          amount: 50000 + index * 5000
-        }
-      ],
-      timeRemaining: `${3 + index}d`
-    }));
-
-    await Auction.insertMany(auctionDocs);
-    console.log("✅ Seeded Auctions:", auctionDocs.length);
-
-    mongoose.disconnect();
-  })
-  .catch(err => {
-    console.error("❌ Seeding Error:", err);
-    mongoose.disconnect();
-  });
+seedAuctions();

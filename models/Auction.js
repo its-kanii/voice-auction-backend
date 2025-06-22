@@ -1,34 +1,24 @@
 const mongoose = require("mongoose");
 
-const bidSchema = new mongoose.Schema({
-  user: String,
-  amount: Number,
-  time: {
-    type: Date,
-    default: Date.now
-  }
-});
-
 const auctionSchema = new mongoose.Schema({
-  productId: {
-    type: String, // matches with your product API (_id or id)
-    required: true
-  },
+  productName: String,
+  productDescription: String,
   highestBid: {
     user: String,
-    amount: {
-      type: Number,
-      default: 0
-    }
+    amount: Number
   },
-  biddingHistory: [bidSchema],
-  timeRemaining: {
-    type: String,
-    default: "3d"
-  }
+  biddingHistory: [
+    {
+      user: String,
+      amount: Number,
+      time: { type: Date, default: Date.now }
+    }
+  ],
+  timeRemaining: String // e.g., "3d"
 });
 
 module.exports = mongoose.model("Auction", auctionSchema);
+
 
 
 
