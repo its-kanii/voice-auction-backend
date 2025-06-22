@@ -1,33 +1,43 @@
-require("dotenv").config();
+require('dotenv').config();
 const mongoose = require("mongoose");
 const Auction = require("../models/Auction");
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ Connection error:", err));
+  .then(() => {
+    console.log("✅ MongoDB Connected");
 
-const seedData = [
-  {
-    productName: "Mobile",
-    productDescription: "Latest smartphone with powerful features.",
-    highestBid: { user: "InitialUser", amount: 50000 },
-    biddingHistory: [{ user: "InitialUser", amount: 50000 }],
-    timeRemaining: "3d"
-  },
-  {
-    productName: "Laptop",
-    productDescription: "High-performance laptop for work and gaming.",
-    highestBid: { user: "InitialUser", amount: 70000 },
-    biddingHistory: [{ user: "InitialUser", amount: 70000 }],
-    timeRemaining: "5d"
-  }
-];
-
-const seedAuctions = async () => {
-  await Auction.deleteMany();
-  const auctions = await Auction.insertMany(seedData);
-  console.log("✅ Auctions Seeded:", auctions.length);
-  mongoose.disconnect();
-};
-
-seedAuctions();
+    return Auction.insertMany([
+      {
+        productId: "iPhone 14 Pro",
+        highestBid: { user: "InitialUser", amount: 75000 },
+        biddingHistory: [{ user: "InitialUser", amount: 75000, time: new Date() }],
+        timeRemaining: "3d"
+      },
+      {
+        productId: "MacBook Air M2",
+        highestBid: { user: "InitialUser", amount: 95000 },
+        biddingHistory: [{ user: "InitialUser", amount: 95000, time: new Date() }],
+        timeRemaining: "5d"
+      },
+      {
+        productId: "Sony Headphones",
+        highestBid: { user: "InitialUser", amount: 9000 },
+        biddingHistory: [{ user: "InitialUser", amount: 9000, time: new Date() }],
+        timeRemaining: "1d"
+      },
+      {
+        productId: "Nikon DSLR",
+        highestBid: { user: "InitialUser", amount: 45000 },
+        biddingHistory: [{ user: "InitialUser", amount: 45000, time: new Date() }],
+        timeRemaining: "3d"
+      }
+    ]);
+  })
+  .then(() => {
+    console.log("✅ Auctions seeded");
+    process.exit();
+  })
+  .catch(err => {
+    console.error("❌ Seeding error:", err);
+    process.exit(1);
+  });

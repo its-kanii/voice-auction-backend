@@ -66,6 +66,27 @@ app.post("/api/auction/:id/bid", async (req, res) => {
   }
 });
 
+// Dashboard data
+app.get("/dashboard/data", async (req, res) => {
+  try {
+    const auctions = await Auction.find();
+
+    const result = auctions.map(auction => ({
+      _id: auction._id,
+      productId: auction.productId,
+      highestBid: auction.highestBid,
+      biddingHistory: auction.biddingHistory,
+      timeRemaining: auction.timeRemaining,
+    }));
+
+    res.json({ products: result });
+  } catch (error) {
+    console.error("❌ Dashboard Error:", error.message);
+    res.status(500).json({ message: "Dashboard fetch failed" });
+  }
+});
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Auction server running at http://localhost:${PORT}`);
