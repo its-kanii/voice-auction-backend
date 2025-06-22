@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>VoiceBuddy Auction Dashboard</title>
   <style>
-    body { font-family: Arial; padding: 20px; margin-bottom: 120px; }
+    body { font-family: Arial, sans-serif; padding: 20px; margin-bottom: 100px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
-    th { background-color: #f2f2f2; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background-color: #f4f4f4; }
     #footer { position: fixed; bottom: 10px; left: 10px; font-size: 12px; }
   </style>
 </head>
@@ -31,43 +31,44 @@
     </table>
   </div>
 
-  <div id="footer">VoiceBuddy by [Your Name] | Powered by OmniDimension + Node.js</div>
+  <div id="footer">VoiceBuddy by Kanimozhi | Powered by OmniDimension + Node.js</div>
 
   <!-- Voice Agent Embed -->
   <script id="omnidimension-web-widget" async src="https://backend.omnidim.io/web_widget.js?secret_key=09c9a0776e2d3c048bd31a6b1dd126ed"></script>
 
-  <!-- JS to Load Auction Data -->
+  <!-- JS to Fetch and Display Auction Data -->
   <script>
     async function fetchData() {
       try {
-        const res = await fetch('/dashboard/data', { cache: 'no-store' });
-        const data = await res.json();
-
+        const response = await fetch('/dashboard/data', { cache: 'no-store' });
+        const data = await response.json();
         const tbody = document.querySelector('#auctionTable tbody');
         tbody.innerHTML = '';
 
         data.products.forEach(product => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${product.name}</td>
-            <td>${product.description}</td>
-            <td>${product.highestBid.amount}</td>
-            <td>${product.highestBid.user}</td>
-            <td>${product.biddingHistory.length}</td>
+            <td>${product.productName || 'N/A'}</td>
+            <td>${product.productDescription || 'N/A'}</td>
+            <td>${product.highestBid?.amount || 0}</td>
+            <td>${product.highestBid?.user || 'N/A'}</td>
+            <td>${product.biddingHistory?.length || 0}</td>
           `;
           tbody.appendChild(tr);
         });
-
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Failed to load dashboard data:', error);
       }
     }
 
-    // Initial load + refresh every 3 sec
     fetchData();
     setInterval(fetchData, 3000);
   </script>
+
 </body>
 </html>
+
+
+
 
 

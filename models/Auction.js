@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const auctionSchema = new mongoose.Schema({
-  productName: String,
-  productDescription: String,
+  productName: { type: String, required: true },
+  productDescription: { type: String, default: 'No description available' },
   highestBid: {
     user: String,
     amount: Number
@@ -14,10 +14,13 @@ const auctionSchema = new mongoose.Schema({
       time: { type: Date, default: Date.now }
     }
   ],
-  timeRemaining: String // e.g., "3d"
+  timeRemaining: String
 });
 
-module.exports = mongoose.model("Auction", auctionSchema);
+module.exports = mongoose.model('Auction', auctionSchema);
+
+
+
 
 
 
