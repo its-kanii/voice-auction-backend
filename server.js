@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 
-const Auction = require("./models/Auction");
+const auctionRoutes = require("./routes/auctionRoutes"); // 💡 Import routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,32 +19,15 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 
+// Routes
+app.use(auctionRoutes); // ✅ Use auction API routes
+
 // Root route
 app.get("/", (req, res) => {
   res.send("🎯 Voice Auction API is Live!");
 });
 
-// Get all auctions
-app.get("/api/auctions", async (req, res) => {
-  try {
-    const auctions = await Auction.find();
-    res.json(auctions);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching auctions" });
-  }
-});
-
-// Dashboard data route
-app.get("/dashboard/data", async (req, res) => {
-  try {
-    const auctions = await Auction.find();
-    res.json({ products: auctions });
-  } catch (err) {
-    res.status(500).json({ message: "Dashboard fetch failed" });
-  }
-});
-
-// Serve dashboard HTML
+// Dashboard HTML
 app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
@@ -53,6 +36,7 @@ app.get("/dashboard", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Auction server running at http://localhost:${PORT}`);
 });
+
 
 
 
