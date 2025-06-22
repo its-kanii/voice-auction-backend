@@ -8,61 +8,69 @@ const Auction = require("./models/Auction");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.static('public'));
 
+// Root route (home page)
+app.get("/", (req, res) => {
+  res.send("🎯 Voice Auction API is Live!");
+});
+
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB error:", err));
 
-// GET all auctions
+// Get all auctions
 app.get("/api/auctions", async (req, res) => {
   try {
     const auctions = await Auction.find();
     res.json(auctions);
   } catch (error) {
-    console.error("❌ Fetch Error:", error.message);
+    console.error("❌ Error fetching auctions:", error.message);
     res.status(500).json({ message: "Error fetching auctions" });
   }
 });
 
-// GET auction by ID
+// Get single auction by ID
 app.get("/api/auction/:id", async (req, res) => {
-  const auction = await Auction.findById(req.params.id);
-  auction ? res.json(auction) : res.status(404).send("Auction not found");
+  try {
+    const auction = await Auction.findById(req.params.id);
+    auction ? res.json(auction) : res.status(404).send("Auction not found");
+  } catch (error) {
+    console.error("❌ Error fetching auction:", error.message);
+    res.status(500).send("Error fetching auction");
+  }
 });
 
-// POST a bid
+// Place a bid
 app.post("/api/auction/:id/bid", async (req, res) => {
   const { user, amount } = req.body;
-  const auction = await Auction.findById(req.params.id);
-
-  if (!auction) return res.status(404).send("Auction not found");
-
-  if (amount > auction.highestBid.amount) {
-    auction.highestBid = { user, amount };
-    auction.biddingHistory.push({ user, amount, time: new Date() });
-    await auction.save();
-    res.send({ message: "Bid placed successfully" });
-  } else {
-    res.status(400).send({ message: "Bid must be higher than current" });
-  }
-});
-
-// Dashboard endpoint
-app.get("/dashboard/data", async (req, res) => {
   try {
-    const auctions = await Auction.find();
-    res.json({ products: auctions });
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) return res.status(404).send("Auction not found");
+
+    if (amount > auction.highestBid.amount) {
+      auction.highestBid = { user, amount };
+      auction.biddingHistory.push({ user, amount, time: new Date() });
+      await auction.save();
+      res.send({ message: "Bid placed successfully" });
+    } else {
+      res.status(400).send({ message: "Bid must be higher than current" });
+    }
   } catch (error) {
-    res.status(500).json({ message: "Dashboard fetch failed" });
+    console.error("❌ Error placing bid:", error.message);
+    res.status(500).send("Failed to place bid");
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Auction server running at http://localhost:${PORT}`);
 });
+
 
 
 
