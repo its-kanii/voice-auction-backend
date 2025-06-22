@@ -23,7 +23,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.get("/api/auctions", async (req, res) => {
   try {
     const auctions = await Auction.find();
-    const productRes = await axios.get('http://localhost:8000/api/items');
+    const productRes = await axios.get('https://product-api-slik.onrender.com/api/items');
+');
     const products = productRes.data;
 
     const result = auctions.map(auction => {
@@ -85,7 +86,7 @@ app.post("/api/auction/:id/bid", async (req, res) => {
 app.get("/dashboard/data", async (req, res) => {
   try {
     const auctions = await Auction.find();
-    const productRes = await axios.get('http://localhost:8000/api/items');
+    const productRes = await axios.get('https://product-api-slik.onrender.com/api/items');
     const products = productRes.data;
 
     const result = auctions.map(auction => {
