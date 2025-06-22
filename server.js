@@ -24,7 +24,7 @@ app.get("/api/auctions", async (req, res) => {
   try {
     const auctions = await Auction.find();
     const productRes = await axios.get('https://product-api-slik.onrender.com/api/items');
-');
+
     const products = productRes.data;
 
     const result = auctions.map(auction => {
