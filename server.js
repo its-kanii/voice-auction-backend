@@ -3,53 +3,65 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const axios = require("axios");
 const Auction = require("./models/Auction");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // ✅ Needed to parse JSON
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
-// MongoDB Atlas connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB error:", err));
-
-// GET all auctions
+// 🟩 GET all auctions with external product info
 app.get("/api/auctions", async (req, res) => {
   try {
     const auctions = await Auction.find();
-    res.json(auctions);
-  } catch (err) {
-    res.status(500).send("Server Error");
+    const productRes = await axios.get('http://localhost:8000/api/items');
+    const products = productRes.data;
+
+    const result = auctions.map(auction => {
+      const product = products.find(p =>
+        p._id === auction.productId || p.id === auction.productId
+      );
+
+      return {
+        _id: auction._id,
+        productId: auction.productId,
+        productName: product?.name || "Unknown Product",
+        productDescription: product?.description || "No description available",
+        highestBid: auction.highestBid,
+        biddingHistory: auction.biddingHistory,
+        timeRemaining: auction.timeRemaining,
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("❌ Error fetching auctions:", error.message);
+    res.status(500).json({ message: "Error fetching auctions or products" });
   }
 });
 
-// GET single auction by ID
+// 🟨 GET auction by ID
 app.get("/api/auction/:id", async (req, res) => {
   try {
     const auction = await Auction.findById(req.params.id);
     auction ? res.json(auction) : res.status(404).send("Auction not found");
-  } catch (err) {
-    res.status(500).send("Server Error");
+  } catch (error) {
+    res.status(500).send("Error retrieving auction");
   }
 });
 
-// POST a new bid
+// 🟦 POST bid
 app.post("/api/auction/:id/bid", async (req, res) => {
-  const { user, amount } = req.body || {}; // 🛡 Safety check
-
-  if (!user || !amount) {
-    return res.status(400).send({ message: "Missing user or amount" });
-  }
+  const { user, amount } = req.body;
 
   try {
     const auction = await Auction.findById(req.params.id);
@@ -59,31 +71,47 @@ app.post("/api/auction/:id/bid", async (req, res) => {
       auction.highestBid = { user, amount };
       auction.biddingHistory.push({ user, amount, time: new Date() });
       await auction.save();
-
-      console.log("🎯 Received Bid:", { user, amount });
-
-      return res.send({ message: "Bid placed successfully" });
+      res.send({ message: "Bid placed successfully" });
     } else {
-      return res.status(400).send({ message: "Bid must be higher than current" });
+      res.status(400).send({ message: "Bid must be higher than current" });
     }
-  } catch (err) {
-    console.error("❌ Error processing bid:", err);
-    res.status(500).send("Server Error");
+  } catch (error) {
+    console.error("❌ Bid error:", error.message);
+    res.status(500).json({ message: "Error placing bid" });
   }
 });
 
-
-// GET dashboard data
+// 🟧 Dashboard Endpoint
 app.get("/dashboard/data", async (req, res) => {
   try {
-    const products = await Auction.find();
-    res.json({ products });
-  } catch (err) {
-    res.status(500).send("Error fetching dashboard data");
+    const auctions = await Auction.find();
+    const productRes = await axios.get('http://localhost:8000/api/items');
+    const products = productRes.data;
+
+    const result = auctions.map(auction => {
+      const product = products.find(p =>
+        p._id === auction.productId || p.id === auction.productId
+      );
+
+      return {
+        _id: auction._id,
+        productId: auction.productId,
+        productName: product?.name || "Unknown Product",
+        productDescription: product?.description || "No description available",
+        highestBid: auction.highestBid,
+        biddingHistory: auction.biddingHistory,
+        timeRemaining: auction.timeRemaining,
+      };
+    });
+
+    res.json({ products: result });
+  } catch (error) {
+    console.error("❌ Dashboard error:", error.message);
+    res.status(500).json({ message: "Dashboard fetch failed" });
   }
 });
 
-// Start server
+// 🟫 Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Auction server running at http://localhost:${PORT}`);
 });

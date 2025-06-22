@@ -10,8 +10,10 @@ const bidSchema = new mongoose.Schema({
 });
 
 const auctionSchema = new mongoose.Schema({
-  name: String,
-  description: String,
+  productId: {
+    type: String, // matches with your product API (_id or id)
+    required: true
+  },
   highestBid: {
     user: String,
     amount: {
@@ -20,10 +22,15 @@ const auctionSchema = new mongoose.Schema({
     }
   },
   biddingHistory: [bidSchema],
-  timeRemaining: String // e.g., "5d", "2h"
+  timeRemaining: {
+    type: String,
+    default: "3d"
+  }
 });
 
 module.exports = mongoose.model("Auction", auctionSchema);
+
+
 
 
 
