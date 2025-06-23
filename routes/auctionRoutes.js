@@ -1,44 +1,35 @@
 const express = require("express");
-const router = express.Router(); // ✅ Define router first
-
+const router = express.Router();
 const Auction = require("../models/Auction");
 
-// Get all auctions
-router.get("/api/auctions", async (req, res) => {
-  try {
-    const auctions = await Auction.find();
-    res.json(auctions);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching auctions" });
-  }
-});
-
-// Place a bid
+// POST: Place a bid
 router.post("/api/auctions/:id/bid", async (req, res) => {
+  const { id } = req.params;
+  const { user, amount } = req.body;
+
   try {
-    const auction = await Auction.findById(req.params.id);
+    const auction = await Auction.findById(id);
     if (!auction) return res.status(404).json({ message: "Auction not found" });
 
-    const { user, amount } = req.body;
-
-    // Check if new bid is higher
+    // Only accept higher bids
     if (amount <= auction.highestBid.amount) {
-      return res.status(400).json({ message: "Bid must be higher than current highest bid" });
+      return res.status(400).json({ message: "Bid too low" });
     }
 
-    // Update auction
-    auction.highestBid = { user, amount };
+    // Add to history and update highest
     auction.biddingHistory.push({ user, amount });
-    await auction.save();
+    auction.highestBid = { user, amount };
 
-    res.json({ message: "Bid placed successfully", auction });
+    await auction.save();
+    res.json({ message: "Bid placed", auction });
+
   } catch (err) {
     res.status(500).json({ message: "Error placing bid" });
   }
 });
 
-// Export the router
 module.exports = router;
+
 
 
 

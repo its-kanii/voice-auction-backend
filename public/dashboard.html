@@ -1,20 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AuctionBuddy Auction Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>VoiceBuddy Auction Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; margin-bottom: 100px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    th { background-color: #f4f4f4; }
-    #footer { position: fixed; bottom: 10px; left: 10px; font-size: 12px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin-bottom: 120px;
+    }
+    h2 {
+      margin-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    #footer {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>📊 AuctionBuddy - Real-Time Auction Dashboard</h2>
-  <p>Ask AuctionBuddy to bid, list products, or show auction status using your voice!</p>
+  <h2>📊 VoiceBuddy - Real-Time Auction Dashboard</h2>
+  <p>Ask VoiceBuddy to bid, list products, or show auction status using your voice!</p>
 
   <div id="dashboard">
     <table id="auctionTable">
@@ -31,41 +53,43 @@
     </table>
   </div>
 
-  <div id="footer">AuctionBuddy by Kanimozhi | Powered by OmniDimension + Node.js</div>
+  <div id="footer">VoiceBuddy by Kani Meena | Powered by OmniDimension + Node.js</div>
 
-  <!-- Voice Agent Embed -->
-  <script id="omnidimension-web-widget" async src="https://backend.omnidim.io/web_widget.js?secret_key=09c9a0776e2d3c048bd31a6b1dd126ed"></script>
+  <!-- OmniDimension Agent Widget -->
+  <script id="omnidimension-web-widget" async src="https://backend.omnidim.io/web_widget.js?secret_key=7b35b4adce8d42be88be2656b5597619"></script>
 
-  <!-- JS to Fetch and Display Auction Data -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-  const socket = io();
+  <!-- Real-time auction polling script -->
+  <script>
+    async function fetchDashboardData() {
+      try {
+        const res = await fetch('/dashboard/data', { cache: 'no-store' });
+        const data = await res.json();
 
-  socket.on("auctionUpdated", (auction) => {
-    console.log("🔁 Live Update:", auction);
+        const tbody = document.querySelector('#auctionTable tbody');
+        tbody.innerHTML = '';
 
-    // Update only the modified row
-    const row = document.querySelector(`tr[data-id="${auction._id}"]`);
-    if (row) {
-      row.innerHTML = `
-        <td>${auction.productName}</td>
-        <td>${auction.productDescription}</td>
-        <td>${auction.highestBid.amount}</td>
-        <td>${auction.highestBid.user}</td>
-        <td>${auction.biddingHistory.length}</td>
-      `;
-    } else {
-      // Add new row if not exists
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-id", auction._id);
-      tr.innerHTML = `
-        <td>${auction.productName}</td>
-        <td>${auction.productDescription}</td>
-        <td>${auction.highestBid.amount}</td>
-        <td>${auction.highestBid.user}</td>
-        <td>${auction.biddingHistory.length}</td>
-      `;
-      document.querySelector("#auctionTable tbody").appendChild(tr);
+        data.products.forEach(product => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${product.productName || 'N/A'}</td>
+            <td>${product.productDescription || 'N/A'}</td>
+            <td>${product.highestBid?.amount || 'N/A'}</td>
+            <td>${product.highestBid?.user || 'N/A'}</td>
+            <td>${product.biddingHistory?.length || 0}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (error) {
+        console.error('❌ Error fetching dashboard data:', error);
+      }
     }
-  });
-</script>
+
+    // Initial load + refresh every 3 seconds
+    fetchDashboardData();
+    setInterval(fetchDashboardData, 3000);
+  </script>
+
+</body>
+</html>
+
