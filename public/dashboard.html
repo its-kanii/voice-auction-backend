@@ -2,94 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AuctionBuddy Auction Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      margin-bottom: 120px;
-    }
-    h2 {
-      margin-bottom: 5px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    #footer {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      font-size: 12px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voice Auction Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">🎤 Voice Auction Dashboard</h1>
 
-  <h2>📊 AuctionBuddy - Real-Time Auction Dashboard</h2>
-  <p>Ask AuctionBuddy to bid, list products, or show auction status using your voice!</p>
+    <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
+      <table class="min-w-full text-sm text-left">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="px-4 py-2">Product ID</th>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Description</th>
+            <th class="px-4 py-2">Starting Price</th>
+            <th class="px-4 py-2">Current Bid</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody">
+          <!-- Data will be inserted here -->
+        </tbody>
+      </table>
+    </div>
 
-  <div id="dashboard">
-    <table id="auctionTable">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Description</th>
-          <th>Highest Bid (₹)</th>
-          <th>Bidder</th>
-          <th>Total Bids</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <p id="lastUpdated" class="text-sm text-gray-600 text-right mt-2"></p>
   </div>
 
-  <div id="footer">AuctionBuddy by Creative Crusaders | Powered by OmniDimension + Node.js</div>
-
-  <!-- OmniDimension Agent Widget -->
-  <script id="omnidimension-web-widget" async src="https://backend.omnidim.io/web_widget.js?secret_key=7b35b4adce8d42be88be2656b5597619"></script>
-
-  <!-- Real-time auction polling script -->
   <script>
-    async function fetchDashboardData() {
+    const apiUrl = "https://voice-auction-backend.onrender.com/products";
+
+    async function loadProducts() {
       try {
-        const res = await fetch('/dashboard/data', { cache: 'no-store' });
-        const data = await res.json();
+        const res = await fetch(apiUrl);
+        const products = await res.json();
 
-        const tbody = document.querySelector('#auctionTable tbody');
-        tbody.innerHTML = '';
+        const tbody = document.getElementById("productTableBody");
+        tbody.innerHTML = "";
 
-        data.products.forEach(product => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${product.productName || 'N/A'}</td>
-            <td>${product.productDescription || 'N/A'}</td>
-            <td>${product.highestBid?.amount || 'N/A'}</td>
-            <td>${product.highestBid?.user || 'N/A'}</td>
-            <td>${product.biddingHistory?.length || 0}</td>
+        products.forEach((product) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-4 py-2">${product.productId}</td>
+            <td class="px-4 py-2 font-semibold">${product.name}</td>
+            <td class="px-4 py-2">${product.description}</td>
+            <td class="px-4 py-2">₹${product.startingPrice.toLocaleString()}</td>
+            <td class="px-4 py-2 text-green-700 font-bold">₹${product.currentBid.toLocaleString()}</td>
           `;
-          tbody.appendChild(tr);
+          tbody.appendChild(row);
         });
 
+        document.getElementById("lastUpdated").textContent =
+          "Last updated: " + new Date().toLocaleTimeString();
       } catch (error) {
-        console.error('❌ Error fetching dashboard data:', error);
+        console.error("Failed to load products:", error);
       }
     }
 
-    // Initial load + refresh every 3 seconds
-    fetchDashboardData();
-    setInterval(fetchDashboardData, 3000);
+    loadProducts();             // First load
+    setInterval(loadProducts, 10000); // Refresh every 10 seconds
   </script>
 
+  <!-- 🔊 OmniDimension Voice Agent Widget -->
+  <script id="omnidimension-web-widget" async src="https://backend.omnidim.io/web_widget.js?secret_key=7b35b4adce8d42be88be2656b5597619"></script>
 </body>
 </html>
-
