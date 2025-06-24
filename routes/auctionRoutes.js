@@ -22,17 +22,12 @@ let products = [
 // 🧾 Bid history tracking
 let bidHistory = [];
 
-// GET /products - List all products
-router.get('/products', (req, res) => {
-  res.json(products);
-});
-
-// POST /bid - Place a new bid
 router.post('/bid', (req, res) => {
   const { productId, bidAmount } = req.body;
 
-  // 🪵 Debug log
+  // 🔄 Convert bidAmount to number (even if it's a string)
   const numericBid = Number(bidAmount);
+
   console.log("📥 Incoming bid:", {
     productId,
     bidAmount,
@@ -40,53 +35,26 @@ router.post('/bid', (req, res) => {
     type: typeof bidAmount
   });
 
-  // Input validation
-  if (!productId || isNaN(numericBid) || numericBid <= 0) {
-    return res.status(400).json({ message: "Invalid bid amount." });
+  // Check if it's a valid number
+  if (isNaN(numericBid)) {
+    return res.status(400).json({ message: 'Invalid bid amount.' });
   }
 
-  const product = products.find(p => p.productId === productId);
+  const product = products.find((p) => p.productId === productId);
+
   if (!product) {
-    return res.status(404).json({ message: "Product not found." });
+    return res.status(404).json({ message: 'Product not found.' });
   }
 
   if (numericBid <= product.currentBid) {
-    return res.status(400).json({
-      message: `Your bid must be higher than ₹${product.currentBid}.`
-    });
+    return res.status(400).json({ message: 'Bid amount must be higher than current bid.' });
   }
 
-  // ✅ Update bid
+  // ✅ Update the bid
   product.currentBid = numericBid;
-
-  // 🧾 Store in bid history
-  bidHistory.push({
-    productId,
-    bidAmount: numericBid,
-    timestamp: new Date().toISOString()
-  });
 
   res.json({
     message: `✅ Your bid of ₹${numericBid} for ${product.name} has been placed successfully.`,
     updatedProduct: product
   });
 });
-
-// GET /bids - View bid history
-router.get('/bids', (req, res) => {
-  res.json(bidHistory);
-});
-
-module.exports = router;
-
-
-
-
-
-
-
-
-
-
-
-
