@@ -1,31 +1,49 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
 const router = express.Router();
+const productsFilePath = path.join(__dirname, '..', 'data', 'products.json');
 
-// 🛠 Mock DB — replace with your actual data store
-const placedBids = []; // Add this at the top of the file if needed
+// Utility to load products
+function loadProducts() {
+  const data = fs.readFileSync(productsFilePath, 'utf-8');
+  return JSON.parse(data);
+}
 
-// 🛠 Existing POST /bid route (update it to push into placedBids)
+// Utility to save products
+function saveProducts(products) {
+  fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
+}
+
+// GET /products
+router.get('/products', (req, res) => {
+  const products = loadProducts();
+  res.json(products);
+});
+
+// POST /bid
 router.post('/bid', (req, res) => {
-  const { productId, bidAmount, user = 'VoiceUser' } = req.body;
-  const numericBid = Number(bidAmount);
+  const { productId, bidAmount } = req.body;
+  const numericBid = parseFloat(bidAmount);
 
   if (!productId || isNaN(numericBid)) {
-    return res.status(400).json({ message: "Invalid bid amount." });
+    return res.status(400).json({ message: 'Invalid request data.' });
   }
 
+  const products = loadProducts();
   const product = products.find(p => p.productId === productId);
+
   if (!product) {
-    return res.status(404).json({ message: "Product not found." });
+    return res.status(404).json({ message: 'Product not found.' });
   }
 
   if (numericBid <= product.currentBid) {
-    return res.status(400).json({ message: "Bid must be higher than current bid." });
+    return res.status(400).json({ message: 'Invalid bid amount.' });
   }
 
   product.currentBid = numericBid;
-
-  // 🆕 Store the bid
-  placedBids.push({ productId, user, amount: numericBid, time: new Date().toISOString() });
+  saveProducts(products);
 
   res.json({
     message: `✅ Your bid of ₹${numericBid} for ${product.name} has been placed successfully.`,
@@ -33,13 +51,11 @@ router.post('/bid', (req, res) => {
   });
 });
 
-// 🆕 New Route: GET /bids?user=VoiceUser
-router.get('/bids', (req, res) => {
-  const { user = 'VoiceUser' } = req.query;
-  const userBids = placedBids.filter(bid => bid.user === user);
-  res.json(userBids);
-});
-
 module.exports = router;
+
+
+
+
+
 
 
