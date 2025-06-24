@@ -1,25 +1,24 @@
 const express = require('express');
-const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
-const products = [
-  {
-    productId: 'P001',
-    name: 'iPhone 15 Pro',
-    description: 'Latest Apple flagship phone',
-    startingPrice: 75000,
-    currentBid: 78000,
-  },
-  {
-    productId: 'P002',
-    name: 'MacBook Pro',
-    description: 'Apple M2 13-inch laptop',
-    startingPrice: 120000,
-    currentBid: 124000,
-  }
-];
+const router = express.Router();
+const dataPath = path.join(__dirname, '../data/products.json');
+
+// Helper to read products from JSON
+function loadProducts() {
+  const rawData = fs.readFileSync(dataPath);
+  return JSON.parse(rawData);
+}
+
+// Helper to write updated products to JSON
+function saveProducts(products) {
+  fs.writeFileSync(dataPath, JSON.stringify(products, null, 2));
+}
 
 // GET all products
 router.get('/products', (req, res) => {
+  const products = loadProducts();
   res.json(products);
 });
 
@@ -39,7 +38,9 @@ router.post('/bid', (req, res) => {
     return res.status(400).json({ message: 'Invalid bid amount.' });
   }
 
+  const products = loadProducts();
   const product = products.find((p) => p.productId === productId);
+
   if (!product) {
     return res.status(404).json({ message: 'Product not found.' });
   }
@@ -49,6 +50,7 @@ router.post('/bid', (req, res) => {
   }
 
   product.currentBid = numericBid;
+  saveProducts(products);
 
   res.json({
     message: `✅ Your bid of ₹${numericBid} for ${product.name} has been placed successfully.`,
