@@ -1,56 +1,31 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-
 const router = express.Router();
-const dataPath = path.join(__dirname, '../data/products.json');
 
-// Helper to read products from JSON
-function loadProducts() {
-  const rawData = fs.readFileSync(dataPath);
-  return JSON.parse(rawData);
-}
+// 🛠 Mock DB — replace with your actual data store
+const placedBids = []; // Add this at the top of the file if needed
 
-// Helper to write updated products to JSON
-function saveProducts(products) {
-  fs.writeFileSync(dataPath, JSON.stringify(products, null, 2));
-}
-
-// GET all products
-router.get('/products', (req, res) => {
-  const products = loadProducts();
-  res.json(products);
-});
-
-// POST a bid
+// 🛠 Existing POST /bid route (update it to push into placedBids)
 router.post('/bid', (req, res) => {
-  const { productId, bidAmount } = req.body;
+  const { productId, bidAmount, user = 'VoiceUser' } = req.body;
   const numericBid = Number(bidAmount);
 
-  console.log("📥 Incoming bid:", {
-    productId,
-    bidAmount,
-    numericBid,
-    type: typeof bidAmount,
-  });
-
-  if (isNaN(numericBid)) {
-    return res.status(400).json({ message: 'Invalid bid amount.' });
+  if (!productId || isNaN(numericBid)) {
+    return res.status(400).json({ message: "Invalid bid amount." });
   }
 
-  const products = loadProducts();
-  const product = products.find((p) => p.productId === productId);
-
+  const product = products.find(p => p.productId === productId);
   if (!product) {
-    return res.status(404).json({ message: 'Product not found.' });
+    return res.status(404).json({ message: "Product not found." });
   }
 
   if (numericBid <= product.currentBid) {
-    return res.status(400).json({ message: 'Bid amount must be higher than current bid.' });
+    return res.status(400).json({ message: "Bid must be higher than current bid." });
   }
 
   product.currentBid = numericBid;
-  saveProducts(products);
+
+  // 🆕 Store the bid
+  placedBids.push({ productId, user, amount: numericBid, time: new Date().toISOString() });
 
   res.json({
     message: `✅ Your bid of ₹${numericBid} for ${product.name} has been placed successfully.`,
@@ -58,5 +33,13 @@ router.post('/bid', (req, res) => {
   });
 });
 
+// 🆕 New Route: GET /bids?user=VoiceUser
+router.get('/bids', (req, res) => {
+  const { user = 'VoiceUser' } = req.query;
+  const userBids = placedBids.filter(bid => bid.user === user);
+  res.json(userBids);
+});
+
 module.exports = router;
+
 
