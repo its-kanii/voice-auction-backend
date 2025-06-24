@@ -1,8 +1,7 @@
-// routes/auctionRoutes.js
 const express = require('express');
 const router = express.Router();
 
-// In-memory products list
+// In-memory product list
 let products = [
   {
     productId: "P001",
@@ -29,26 +28,34 @@ router.get('/products', (req, res) => {
 router.post('/bid', (req, res) => {
   const { productId, bidAmount } = req.body;
 
+  // Convert to number (in case it's sent as a string)
+  const numericBid = Number(bidAmount);
+
   const product = products.find(p => p.productId === productId);
   if (!product) {
     return res.status(404).json({ message: "Product not found." });
   }
 
-  if (bidAmount <= product.currentBid) {
+  if (!numericBid || isNaN(numericBid)) {
+    return res.status(400).json({ message: "Invalid bid amount." });
+  }
+
+  if (numericBid <= product.currentBid) {
     return res.status(400).json({
       message: `Your bid must be higher than ₹${product.currentBid}.`
     });
   }
 
-  product.currentBid = bidAmount;
+  product.currentBid = numericBid;
 
   res.json({
-    message: `✅ Your bid of ₹${bidAmount} for ${product.name} has been placed successfully.`,
+    message: `✅ Your bid of ₹${numericBid} for ${product.name} has been placed successfully.`,
     updatedProduct: product
   });
 });
 
 module.exports = router;
+
 
 
 
